@@ -8,7 +8,9 @@ function TransactionSimulator({ onNavigateToGuide }) {
   const publicClient = usePublicClient()
   const { data: walletClient } = useWalletClient()
 
+  const [inputMode, setInputMode] = useState('abi') // 'abi' or 'interface'
   const [abiInput, setAbiInput] = useState('')
+  const [interfaceInput, setInterfaceInput] = useState('')
   const [parsedFunction, setParsedFunction] = useState(null)
   const [contractAddress, setContractAddress] = useState('')
   const [inputValues, setInputValues] = useState({})
@@ -57,10 +59,139 @@ function TransactionSimulator({ onNavigateToGuide }) {
     }
   }, [])
 
+  // Parse function interface like: function transfer(address to, uint256 amount) returns (bool)
+  const parseFunctionInterface = useCallback((input) => {
+    setParseError('')
+    setParsedFunction(null)
+    setInputValues({})
+
+    if (!input.trim()) return
+
+    try {
+      // Clean up the input
+      let cleanInput = input.trim()
+      
+      // Remove 'function' keyword if present
+      if (cleanInput.toLowerCase().startsWith('function ')) {
+        cleanInput = cleanInput.substring(9).trim()
+      }
+
+      // Extract function name
+      const nameMatch = cleanInput.match(/^(\w+)\s*\(/)
+      if (!nameMatch) {
+        setParseError('Could not parse function name. Format: functionName(type1 name1, type2 name2)')
+        return
+      }
+      const functionName = nameMatch[1]
+
+      // Extract parameters section
+      const paramsMatch = cleanInput.match(/\(([^)]*)\)/)
+      if (!paramsMatch) {
+        setParseError('Could not parse parameters. Use format: (type1 name1, type2 name2)')
+        return
+      }
+      const paramsStr = paramsMatch[1].trim()
+
+      // Parse input parameters
+      const inputs = []
+      if (paramsStr) {
+        const params = paramsStr.split(',').map(p => p.trim()).filter(p => p)
+        for (let i = 0; i < params.length; i++) {
+          const param = params[i]
+          // Handle formats like: "address to", "uint256", "address", "uint256 amount"
+          const parts = param.split(/\s+/).filter(p => p)
+          if (parts.length === 0) continue
+          
+          let type = parts[0]
+          let name = parts.length > 1 ? parts[parts.length - 1] : `arg${i}`
+          
+          // Handle indexed, memory, calldata, storage keywords
+          const keywords = ['indexed', 'memory', 'calldata', 'storage']
+          if (parts.length > 2) {
+            type = parts[0]
+            name = parts[parts.length - 1]
+          }
+          
+          // Remove any keywords from the name
+          if (keywords.includes(name.toLowerCase())) {
+            name = `arg${i}`
+          }
+          
+          inputs.push({ name, type, internalType: type })
+        }
+      }
+
+      // Check for mutability keywords
+      let stateMutability = 'nonpayable'
+      const lowerInput = cleanInput.toLowerCase()
+      if (lowerInput.includes(' view') || lowerInput.includes(' view ')) {
+        stateMutability = 'view'
+      } else if (lowerInput.includes(' pure') || lowerInput.includes(' pure ')) {
+        stateMutability = 'pure'
+      } else if (lowerInput.includes(' payable') && !lowerInput.includes('nonpayable')) {
+        stateMutability = 'payable'
+      }
+
+      // Extract return types
+      const outputs = []
+      const returnsMatch = cleanInput.match(/returns\s*\(([^)]*)\)/i)
+      if (returnsMatch) {
+        const returnsStr = returnsMatch[1].trim()
+        if (returnsStr) {
+          const returnParams = returnsStr.split(',').map(p => p.trim()).filter(p => p)
+          for (let i = 0; i < returnParams.length; i++) {
+            const param = returnParams[i]
+            const parts = param.split(/\s+/).filter(p => p)
+            if (parts.length === 0) continue
+            
+            const type = parts[0]
+            const name = parts.length > 1 ? parts[parts.length - 1] : ''
+            
+            outputs.push({ name, type, internalType: type })
+          }
+        }
+      }
+
+      const parsed = {
+        type: 'function',
+        name: functionName,
+        inputs,
+        outputs,
+        stateMutability,
+      }
+
+      setParsedFunction(parsed)
+      
+      // Initialize input values
+      const initialValues = {}
+      inputs.forEach((input, index) => {
+        initialValues[input.name || `arg${index}`] = ''
+      })
+      setInputValues(initialValues)
+    } catch (e) {
+      setParseError('Could not parse function interface. Check the format.')
+    }
+  }, [])
+
   const handleAbiChange = (e) => {
     const value = e.target.value
     setAbiInput(value)
     parseABI(value)
+  }
+
+  const handleInterfaceChange = (e) => {
+    const value = e.target.value
+    setInterfaceInput(value)
+    parseFunctionInterface(value)
+  }
+
+  const switchInputMode = (mode) => {
+    setInputMode(mode)
+    setParseError('')
+    setParsedFunction(null)
+    setInputValues({})
+    setSimulationResult(null)
+    setTxHash('')
   }
 
   const handleInputChange = (name, value) => {
@@ -264,6 +395,7 @@ function TransactionSimulator({ onNavigateToGuide }) {
 
   const clearAbi = () => {
     setAbiInput('')
+    setInterfaceInput('')
     setParsedFunction(null)
     setInputValues({})
     setParseError('')
@@ -284,11 +416,18 @@ function TransactionSimulator({ onNavigateToGuide }) {
   }
 
   const refreshAbi = () => {
-    if (!abiInput.trim()) return
-    parseABI(abiInput)
+    if (inputMode === 'abi') {
+      if (!abiInput.trim()) return
+      parseABI(abiInput)
+    } else {
+      if (!interfaceInput.trim()) return
+      parseFunctionInterface(interfaceInput)
+    }
     setSimulationResult(null)
     setTxHash('')
   }
+  
+  const currentInput = inputMode === 'abi' ? abiInput : interfaceInput
 
   const refreshParameters = () => {
     const clearedValues = {}
@@ -351,12 +490,12 @@ function TransactionSimulator({ onNavigateToGuide }) {
         <section className="abi-section">
           <div className="section-header">
             <span className="section-number">01</span>
-            <h2>Function ABI</h2>
+            <h2>Function Definition</h2>
             <button 
               className="btn-icon btn-icon-refresh" 
               onClick={refreshAbi}
-              title="Refresh ABI"
-              disabled={!abiInput}
+              title="Refresh"
+              disabled={!currentInput}
             >
               <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M23 4v6h-6M1 20v-6h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -366,19 +505,42 @@ function TransactionSimulator({ onNavigateToGuide }) {
             <button 
               className="btn-icon" 
               onClick={clearAbi}
-              title="Clear ABI"
-              disabled={!abiInput}
+              title="Clear"
+              disabled={!currentInput}
             >
               <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </button>
           </div>
+          
+          <div className="input-mode-toggle">
+            <button 
+              className={`mode-btn ${inputMode === 'abi' ? 'active' : ''}`}
+              onClick={() => switchInputMode('abi')}
+            >
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M16 18l6-6-6-6M8 6l-6 6 6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              ABI JSON
+            </button>
+            <button 
+              className={`mode-btn ${inputMode === 'interface' ? 'active' : ''}`}
+              onClick={() => switchInputMode('interface')}
+            >
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M4 7h16M4 12h16M4 17h10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Function Interface
+            </button>
+          </div>
+
           <div className="input-group">
-            <textarea
-              value={abiInput}
-              onChange={handleAbiChange}
-              placeholder='Paste function ABI JSON here, e.g.:
+            {inputMode === 'abi' ? (
+              <textarea
+                value={abiInput}
+                onChange={handleAbiChange}
+                placeholder='Paste function ABI JSON here, e.g.:
 {
   "type": "function",
   "name": "transfer",
@@ -389,9 +551,26 @@ function TransactionSimulator({ onNavigateToGuide }) {
   "outputs": [{ "name": "", "type": "bool" }],
   "stateMutability": "nonpayable"
 }'
-              className="abi-input"
-              spellCheck="false"
-            />
+                className="abi-input"
+                spellCheck="false"
+              />
+            ) : (
+              <textarea
+                value={interfaceInput}
+                onChange={handleInterfaceChange}
+                placeholder='Enter function signature, e.g.:
+
+function transfer(address to, uint256 amount) returns (bool)
+
+function balanceOf(address account) view returns (uint256)
+
+function approve(address spender, uint256 amount) external returns (bool)
+
+Modifiers: view, pure, payable'
+                className="abi-input interface-input"
+                spellCheck="false"
+              />
+            )}
             {parseError && <div className="error-message">{parseError}</div>}
           </div>
         </section>
