@@ -3,7 +3,7 @@ import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { useAccount, usePublicClient, useWalletClient } from 'wagmi'
 import { encodeFunctionData, decodeFunctionResult, formatEther } from 'viem'
 
-function TransactionSimulator() {
+function TransactionSimulator({ onNavigateToGuide }) {
   const { address, isConnected, chain } = useAccount()
   const publicClient = usePublicClient()
   const { data: walletClient } = useWalletClient()
@@ -334,7 +334,17 @@ function TransactionSimulator() {
           </div>
           <h1>TxForge</h1>
         </div>
-        <ConnectButton />
+        <div className="header-right">
+          <button className="nav-link" onClick={onNavigateToGuide}>
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
+              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M12 17h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+            </svg>
+            How to Use
+          </button>
+          <ConnectButton />
+        </div>
       </header>
 
       <main className="main-content">
