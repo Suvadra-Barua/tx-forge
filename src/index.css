@@ -112,6 +112,12 @@ body::before {
   height: 22px;
 }
 
+.logo-text {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
 .logo h1 {
   font-size: 1.35rem;
   font-weight: 600;
@@ -120,6 +126,32 @@ body::before {
   -webkit-text-fill-color: transparent;
   background-clip: text;
   letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.dev-badge {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--accent-secondary);
+  background: rgba(0, 212, 255, 0.15);
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  animation: pulse-accent 3s ease-in-out infinite;
+}
+
+@keyframes pulse-accent {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
 }
 
 /* Main Content */
@@ -900,19 +932,101 @@ section:hover {
 
 /* Footer */
 .footer {
-  padding: 1.5rem;
-  text-align: center;
+  padding: 1rem 1.5rem;
   color: var(--text-muted);
   font-size: 0.85rem;
   border-top: 1px solid var(--border-color);
   background: var(--bg-secondary);
 }
 
-.footer .copyright {
-  margin-top: 0.5rem;
+.footer-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.footer-left {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.footer-left span:first-child {
+  font-size: 0.8rem;
+}
+
+.footer-warning-compact {
   font-size: 0.75rem;
+  color: var(--warning);
+}
+
+.footer-warning-compact a {
+  color: var(--accent-primary);
+  text-decoration: underline;
+}
+
+.footer-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
+}
+
+.footer-links {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+}
+
+.footer-links a {
+  color: var(--accent-secondary);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.footer-links a:hover {
+  color: var(--accent-primary);
+  text-decoration: underline;
+}
+
+.separator {
+  color: var(--text-muted);
+  opacity: 0.5;
+}
+
+.copyright {
+  font-size: 0.7rem;
   color: var(--text-muted);
   opacity: 0.7;
+}
+
+/* Mobile responsive footer */
+@media (max-width: 768px) {
+  .footer-main {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+  }
+
+  .footer-left {
+    align-items: center;
+  }
+
+  .footer-right {
+    align-items: center;
+  }
+
+  .footer {
+    padding: 1rem;
+  }
+
+  .footer-main {
+    gap: 1rem;
+  }
 }
 
 /* Scrollbar */
@@ -993,6 +1107,120 @@ section:hover {
   display: flex;
   align-items: center;
   gap: 1rem;
+}
+
+/* Development Banner */
+.development-banner {
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  border-bottom: 2px solid #2196f3;
+  padding: 0;
+  position: relative;
+  z-index: 1001;
+}
+
+.dev-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 2rem;
+  gap: 1rem;
+}
+
+.dev-icon {
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.dev-text {
+  flex: 1;
+  font-size: 0.85rem;
+  color: #1565c0;
+  line-height: 1.4;
+}
+
+.dev-text strong {
+  color: #0d47a1;
+}
+
+.dev-text a {
+  color: #1976d2;
+  text-decoration: underline;
+  margin-left: 0.25rem;
+}
+
+.dev-close {
+  background: none;
+  border: none;
+  font-size: 1rem;
+  color: #1565c0;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 50%;
+  transition: background-color 0.2s ease;
+  flex-shrink: 0;
+}
+
+.dev-close:hover {
+  background: rgba(33, 150, 243, 0.1);
+}
+
+/* Risk Warning Banner */
+.risk-banner {
+  background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+  border-bottom: 2px solid #f39c12;
+  padding: 0;
+  position: relative;
+  z-index: 1000;
+}
+
+.risk-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 2rem;
+  gap: 1rem;
+}
+
+.risk-icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.risk-text {
+  flex: 1;
+  font-size: 0.9rem;
+  color: #8b4513;
+  line-height: 1.4;
+}
+
+.risk-text strong {
+  color: #d68910;
+}
+
+.risk-text a {
+  color: #e67e22;
+  text-decoration: underline;
+  margin-left: 0.5rem;
+}
+
+.risk-close {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  color: #8b4513;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 50%;
+  transition: background-color 0.2s ease;
+  flex-shrink: 0;
+}
+
+.risk-close:hover {
+  background: rgba(0, 0, 0, 0.1);
 }
 
 /* ========================================

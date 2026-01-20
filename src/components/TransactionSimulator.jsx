@@ -531,6 +531,32 @@ function TransactionSimulator({ onNavigateToGuide }) {
 
   return (
     <div className="simulator-container">
+      <div className="development-banner">
+        <div className="dev-content">
+          <span className="dev-icon">🚧</span>
+          <span className="dev-text">
+            TxForge is <strong>under active development</strong>. Report issues and suggest features on
+            <a href="https://github.com/yourusername/tx-forge" target="_blank" rel="noopener noreferrer"> GitHub</a>
+          </span>
+          <button className="dev-close" onClick={(e) => e.target.closest('.development-banner').style.display = 'none'}>
+            ✕
+          </button>
+        </div>
+      </div>
+
+      <div className="risk-banner">
+        <div className="risk-content">
+          <span className="risk-icon">⚠️</span>
+          <span className="risk-text">
+            <strong>Blockchain transactions are irreversible.</strong> Only use funds you can afford to lose.
+            <a href="/terms-of-service.html" target="_blank" rel="noopener noreferrer">Read terms</a>
+          </span>
+          <button className="risk-close" onClick={(e) => e.target.closest('.risk-banner').style.display = 'none'}>
+            ✕
+          </button>
+        </div>
+      </div>
+
       <header className="header">
         <div className="logo">
           <div className="logo-icon">
@@ -538,7 +564,10 @@ function TransactionSimulator({ onNavigateToGuide }) {
               <path d="M13 2L3 14H12L11 22L21 10H12L13 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </div>
-          <h1>TxForge</h1>
+          <div className="logo-text">
+            <h1>TxForge</h1>
+            <span className="dev-badge">BETA</span>
+          </div>
         </div>
         <div className="header-right">
           {currentGasPrice && chain && (
@@ -965,8 +994,25 @@ Modifiers: view, pure, payable'
       </main>
 
       <footer className="footer">
-        <p>Built for EVM chains • Simulate before you send</p>
-        <p className="copyright">© {new Date().getFullYear()} TxForge. All rights reserved.</p>
+        <div className="footer-main">
+          <div className="footer-left">
+            <span>Built for EVM chains • Simulate before you send</span>
+            <span className="footer-warning-compact">
+              ⚠️ <strong>Use at your own risk</strong> •
+              <a href="/terms-of-service.html" target="_blank" rel="noopener noreferrer"> Terms</a>
+            </span>
+          </div>
+          <div className="footer-right">
+            <div className="footer-links">
+              <a href="/privacy-policy.html" target="_blank" rel="noopener noreferrer">Privacy</a>
+              <span className="separator">•</span>
+              <a href="https://github.com/yourusername/tx-forge" target="_blank" rel="noopener noreferrer">GitHub</a>
+            </div>
+            <div className="copyright">
+              © {new Date().getFullYear()} TxForge • Open source & free
+            </div>
+          </div>
+        </div>
       </footer>
     </div>
   )
