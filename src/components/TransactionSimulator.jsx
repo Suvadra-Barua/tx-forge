@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { useAccount, usePublicClient, useWalletClient } from 'wagmi'
 import { encodeFunctionData, decodeFunctionResult, formatEther } from 'viem'
@@ -21,9 +21,29 @@ function TransactionSimulator({ onNavigateToGuide }) {
   const [isSending, setIsSending] = useState(false)
   const [isReading, setIsReading] = useState(false)
   const [txHash, setTxHash] = useState('')
+  const [currentGasPrice, setCurrentGasPrice] = useState(null)
 
   // Check if function is read-only (view or pure)
   const isReadFunction = parsedFunction?.stateMutability === 'view' || parsedFunction?.stateMutability === 'pure'
+
+  // Fetch current gas price
+  useEffect(() => {
+    const fetchGasPrice = async () => {
+      if (publicClient && chain) {
+        try {
+          const gasPrice = await publicClient.getGasPrice()
+          setCurrentGasPrice(gasPrice)
+        } catch (error) {
+          // Ignore gas price fetch errors
+        }
+      }
+    }
+
+    fetchGasPrice()
+    // Update gas price every 30 seconds
+    const interval = setInterval(fetchGasPrice, 30000)
+    return () => clearInterval(interval)
+  }, [publicClient, chain])
 
   const parseABI = useCallback((input) => {
     setParseError('')
@@ -249,8 +269,17 @@ function TransactionSimulator({ onNavigateToGuide }) {
         value: ethValue ? BigInt(Math.floor(parseFloat(ethValue) * 1e18)) : BigInt(0),
       }
 
-      // Estimate gas first
-      const gasEstimate = await publicClient.estimateGas(txParams)
+      // Get gas price and estimate gas
+      const [gasEstimate, gasPrice] = await Promise.all([
+        publicClient.estimateGas(txParams),
+        publicClient.getGasPrice()
+      ])
+
+      // Add 20% buffer for safety (common practice)
+      const gasLimitWithBuffer = BigInt(Math.floor(Number(gasEstimate) * 1.2))
+
+      // Calculate total cost
+      const totalGasCost = gasLimitWithBuffer * gasPrice
 
       // Simulate the call
       let returnData = null
@@ -270,10 +299,27 @@ function TransactionSimulator({ onNavigateToGuide }) {
         }
       }
 
+      // Check if user has enough balance for gas
+      let gasWarning = null
+      if (address) {
+        try {
+          const balance = await publicClient.getBalance({ address })
+          if (totalGasCost > balance) {
+            gasWarning = `Insufficient balance for gas. Need ${(Number(totalGasCost) / 1e18).toFixed(6)} ${chain?.nativeCurrency?.symbol || 'ETH'}, you have ${(Number(balance) / 1e18).toFixed(6)}`
+          }
+        } catch (balanceError) {
+          // Ignore balance check errors
+        }
+      }
+
       setSimulationResult({
         success: true,
         gasEstimate: gasEstimate.toString(),
-        returnData: returnData !== null ? JSON.stringify(returnData, (_, v) => 
+        gasLimitWithBuffer: gasLimitWithBuffer.toString(),
+        gasPrice: gasPrice.toString(),
+        totalGasCost: totalGasCost.toString(),
+        gasWarning,
+        returnData: returnData !== null ? JSON.stringify(returnData, (_, v) =>
           typeof v === 'bigint' ? v.toString() : v, 2) : null,
       })
     } catch (error) {
@@ -474,6 +520,14 @@ function TransactionSimulator({ onNavigateToGuide }) {
           <h1>TxForge</h1>
         </div>
         <div className="header-right">
+          {currentGasPrice && chain && (
+            <div className="gas-price-display">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M13 2L3 14H12L11 22L21 10H12L13 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              {(Number(currentGasPrice) / 1e9).toFixed(2)} gwei
+            </div>
+          )}
           <button className="nav-link" onClick={onNavigateToGuide}>
             <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
@@ -811,10 +865,38 @@ Modifiers: view, pure, payable'
                             : (txHash ? 'Transaction Sent!' : 'Simulation Successful')
                           }
                         </h3>
-                        {simulationResult.gasEstimate && (
-                          <div className="result-item">
-                            <span className="label">Gas Estimate:</span>
-                            <span className="value">{parseInt(simulationResult.gasEstimate).toLocaleString()}</span>
+                        {!simulationResult?.isRead && simulationResult.gasEstimate && (
+                          <div className="gas-breakdown">
+                            <div className="gas-header">
+                              <span className="gas-title">Gas Analysis</span>
+                              {simulationResult.gasWarning && (
+                                <div className="gas-warning">
+                                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
+                                    <path d="M12 16v-4M12 8h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                                  </svg>
+                                  {simulationResult.gasWarning}
+                                </div>
+                              )}
+                            </div>
+                            <div className="gas-items">
+                              <div className="gas-item">
+                                <span className="gas-label">Gas Limit:</span>
+                                <span className="gas-value">{parseInt(simulationResult.gasEstimate).toLocaleString()}</span>
+                              </div>
+                              <div className="gas-item">
+                                <span className="gas-label">With Buffer (20%):</span>
+                                <span className="gas-value">{parseInt(simulationResult.gasLimitWithBuffer || simulationResult.gasEstimate).toLocaleString()}</span>
+                              </div>
+                              <div className="gas-item">
+                                <span className="gas-label">Gas Price:</span>
+                                <span className="gas-value">{(Number(simulationResult.gasPrice) / 1e9).toFixed(2)} gwei</span>
+                              </div>
+                              <div className="gas-item total">
+                                <span className="gas-label">Total Cost:</span>
+                                <span className="gas-value">{(Number(simulationResult.totalGasCost) / 1e18).toFixed(6)} {chain?.nativeCurrency?.symbol || 'ETH'}</span>
+                              </div>
+                            </div>
                           </div>
                         )}
                         {simulationResult.returnData && (
