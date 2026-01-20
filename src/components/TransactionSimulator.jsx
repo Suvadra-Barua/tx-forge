@@ -226,6 +226,23 @@ function TransactionSimulator() {
     setTxHash('')
   }
 
+  const refreshAbi = () => {
+    if (!abiInput.trim()) return
+    parseABI(abiInput)
+    setSimulationResult(null)
+    setTxHash('')
+  }
+
+  const refreshParameters = () => {
+    const clearedValues = {}
+    parsedFunction?.inputs?.forEach((input, index) => {
+      clearedValues[input.name || `arg${index}`] = ''
+    })
+    setInputValues(clearedValues)
+    setSimulationResult(null)
+    setTxHash('')
+  }
+
   const getExplorerUrl = () => {
     if (!chain || !txHash) return null
     const explorers = {
@@ -269,6 +286,17 @@ function TransactionSimulator() {
             <span className="section-number">01</span>
             <h2>Function ABI</h2>
             <button 
+              className="btn-icon btn-icon-refresh" 
+              onClick={refreshAbi}
+              title="Refresh ABI"
+              disabled={!abiInput}
+            >
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M23 4v6h-6M1 20v-6h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+            <button 
               className="btn-icon" 
               onClick={clearAbi}
               title="Clear ABI"
@@ -307,6 +335,17 @@ function TransactionSimulator() {
               <div className="section-header">
                 <span className="section-number">02</span>
                 <h2>Parameters</h2>
+                <button 
+                  className="btn-icon btn-icon-refresh" 
+                  onClick={refreshParameters}
+                  title="Refresh Parameters"
+                  disabled={Object.values(inputValues).every(v => !v)}
+                >
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M23 4v6h-6M1 20v-6h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </button>
                 <button 
                   className="btn-icon" 
                   onClick={clearParameters}

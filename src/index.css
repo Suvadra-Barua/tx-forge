@@ -199,6 +199,12 @@ section:hover {
   color: var(--error);
 }
 
+.btn-icon.btn-icon-refresh:hover:not(:disabled) {
+  background: rgba(0, 212, 255, 0.1);
+  border-color: var(--accent-secondary);
+  color: var(--accent-secondary);
+}
+
 .btn-icon:disabled {
   opacity: 0.3;
   cursor: not-allowed;
