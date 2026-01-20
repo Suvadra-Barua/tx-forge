@@ -2,8 +2,8 @@ function HowToUse({ onNavigateHome }) {
   const steps = [
     {
       number: '01',
-      title: 'Get Your Function ABI',
-      description: 'Copy a single function ABI from your smart contract. You can find this in Etherscan (Contract → Code → ABI), your project\'s artifacts, or from tools like Foundry/Hardhat.',
+      title: 'Define Your Function',
+      description: 'Choose between two input modes: paste the full ABI JSON from Etherscan or your project artifacts, or use the simpler Function Interface format by typing the signature directly.',
       example: `{
   "type": "function",
   "name": "transfer",
@@ -14,14 +14,20 @@ function HowToUse({ onNavigateHome }) {
   "outputs": [{ "name": "", "type": "bool" }],
   "stateMutability": "nonpayable"
 }`,
-      tips: ['Only paste one function at a time', 'Must include "type": "function"', 'Include inputs, outputs, and stateMutability'],
+      interfaceExample: 'function transfer(address to, uint256 amount) returns (bool)',
+      tips: [
+        'ABI JSON: Full format from Etherscan or build artifacts',
+        'Function Interface: Simple signature like "function name(type arg) view returns (type)"',
+        'Use modifiers: view, pure, payable for state mutability',
+      ],
     },
     {
       number: '02',
       title: 'Enter Parameters',
       description: 'Fill in the contract address and any function arguments. The app automatically detects parameter types and provides appropriate input hints.',
       tips: [
-        'Contract address must be a valid 0x... address',
+        'Contract address must be a valid 0x... address with deployed code',
+        'TxForge will verify the contract exists on the network',
         'For arrays, use JSON format: ["value1", "value2"]',
         'Boolean values: type "true" or "false"',
         'For payable functions, enter ETH value to send',
@@ -115,21 +121,46 @@ function HowToUse({ onNavigateHome }) {
               <p className="step-description">{step.description}</p>
               
               {step.example && (
-                <div className="code-example">
-                  <div className="code-header">
-                    <span>Example ABI</span>
-                    <button 
-                      className="copy-btn"
-                      onClick={() => copyToClipboard(step.example)}
-                    >
-                      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <rect x="9" y="9" width="13" height="13" rx="2" stroke="currentColor" strokeWidth="2"/>
-                        <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" stroke="currentColor" strokeWidth="2"/>
-                      </svg>
-                      Copy
-                    </button>
+                <div className="code-examples-dual">
+                  <div className="code-example">
+                    <div className="code-header">
+                      <span>ABI JSON</span>
+                      <button 
+                        className="copy-btn"
+                        onClick={() => copyToClipboard(step.example)}
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <rect x="9" y="9" width="13" height="13" rx="2" stroke="currentColor" strokeWidth="2"/>
+                          <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" stroke="currentColor" strokeWidth="2"/>
+                        </svg>
+                        Copy
+                      </button>
+                    </div>
+                    <pre>{step.example}</pre>
                   </div>
-                  <pre>{step.example}</pre>
+                  
+                  {step.interfaceExample && (
+                    <div className="code-example interface-example">
+                      <div className="code-header">
+                        <span>Function Interface</span>
+                        <button 
+                          className="copy-btn"
+                          onClick={() => copyToClipboard(step.interfaceExample)}
+                        >
+                          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="9" y="9" width="13" height="13" rx="2" stroke="currentColor" strokeWidth="2"/>
+                            <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" stroke="currentColor" strokeWidth="2"/>
+                          </svg>
+                          Copy
+                        </button>
+                      </div>
+                      <pre>{step.interfaceExample}</pre>
+                      <div className="interface-note">
+                        <span className="interface-badge">Simpler!</span>
+                        Just type the function signature
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -232,6 +263,11 @@ function HowToUse({ onNavigateHome }) {
               <div className="tip-icon">📊</div>
               <h3>Check Return Values</h3>
               <p>Simulations show return values. For functions like `approve`, check that it returns `true`.</p>
+            </div>
+            <div className="tip-card">
+              <div className="tip-icon">⚠️</div>
+              <h3>Contract Validation</h3>
+              <p>TxForge automatically checks if contracts exist at the provided address. You'll get clear errors for invalid or undeployed contracts.</p>
             </div>
           </div>
         </div>
