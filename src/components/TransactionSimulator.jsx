@@ -536,7 +536,7 @@ function TransactionSimulator({ onNavigateToGuide }) {
           <span className="dev-icon">🚧</span>
           <span className="dev-text">
             TxForge is <strong>under active development</strong>. Report issues and suggest features on
-            <a href="https://github.com/yourusername/tx-forge" target="_blank" rel="noopener noreferrer"> GitHub</a>
+            <a href="https://github.com/Suvadra-Barua/tx-forge" target="_blank" rel="noopener noreferrer"> GitHub</a>
           </span>
           <button className="dev-close" onClick={(e) => e.target.closest('.development-banner').style.display = 'none'}>
             ✕
@@ -1006,7 +1006,7 @@ Modifiers: view, pure, payable'
             <div className="footer-links">
               <a href="/privacy-policy.html" target="_blank" rel="noopener noreferrer">Privacy</a>
               <span className="separator">•</span>
-              <a href="https://github.com/yourusername/tx-forge" target="_blank" rel="noopener noreferrer">GitHub</a>
+              <a href="https://github.com/Suvadra-Barua/tx-forge" target="_blank" rel="noopener noreferrer">GitHub</a>
             </div>
             <div className="copyright">
               © {new Date().getFullYear()} TxForge • Open source & free

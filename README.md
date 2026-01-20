@@ -2,7 +2,7 @@
 
 A powerful EVM transaction toolkit built with React, RainbowKit, and Viem. Simulate, craft, and send transactions across multiple chains with advanced validation and gas analysis.
 
-[![GitHub](https://img.shields.io/badge/GitHub-View_Source-181717?style=flat&logo=github)](https://github.com/yourusername/tx-forge)
+[![GitHub](https://img.shields.io/badge/GitHub-View_Source-181717?style=flat&logo=github)](https://github.com/Suvadra-Barua/tx-forge)
 [![Status](https://img.shields.io/badge/Status-In_Development-orange)](#)
 
 ![TxForge](https://img.shields.io/badge/EVM-Compatible-brightgreen)
@@ -192,9 +192,9 @@ TxForge handles all Solidity types with smart parsing:
 **TxForge is actively developed and evolving.** As an open-source project, we welcome contributions, bug reports, and feature requests!
 
 - 📊 **Current Version**: In active development
-- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/yourusername/tx-forge/issues)
-- 💡 **Feature Requests**: [GitHub Discussions](https://github.com/yourusername/tx-forge/discussions)
-- 🤝 **Contributing**: See [CONTRIBUTING.md](https://github.com/yourusername/tx-forge/blob/main/CONTRIBUTING.md)
+- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/Suvadra-Barua/tx-forge/issues)
+- 💡 **Feature Requests**: [GitHub Discussions](https://github.com/Suvadra-Barua/tx-forge/discussions)
+
 
 ## ⚠️ **Important Safety Notice**
 
@@ -208,9 +208,8 @@ TxForge handles all Solidity types with smart parsing:
 - ✅ Educational documentation
 
 ### Found a Bug or Issue?
-- **Report it**: [GitHub Issues](https://github.com/yourusername/tx-forge/issues/new)
+- **Report it**: [GitHub Issues](https://github.com/Suvadra-Barua/tx-forge/issues/new)
 - **Include details**: Browser, network, steps to reproduce
-- **Security issues**: Email directly (check SECURITY.md)
 
 ### Before Using:
 1. **Read the Terms of Service** (`/terms-of-service.html`)
