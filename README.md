@@ -2,6 +2,9 @@
 
 A powerful EVM transaction toolkit built with React, RainbowKit, and Viem. Simulate, craft, and send transactions across multiple chains with advanced validation and gas analysis.
 
+[![GitHub](https://img.shields.io/badge/GitHub-View_Source-181717?style=flat&logo=github)](https://github.com/yourusername/tx-forge)
+[![Status](https://img.shields.io/badge/Status-In_Development-orange)](#)
+
 ![TxForge](https://img.shields.io/badge/EVM-Compatible-brightgreen)
 ![TxForge](https://img.shields.io/badge/React-18+-blue)
 ![TxForge](https://img.shields.io/badge/Type-Safe-orange)
@@ -183,6 +186,45 @@ TxForge handles all Solidity types with smart parsing:
 - **Viem** - Type-safe TypeScript interface for Ethereum
 - **TanStack Query** - Robust async state management
 - **CSS Variables** - Maintainable theming system
+
+## 🚧 **Development Status**
+
+**TxForge is actively developed and evolving.** As an open-source project, we welcome contributions, bug reports, and feature requests!
+
+- 📊 **Current Version**: In active development
+- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/yourusername/tx-forge/issues)
+- 💡 **Feature Requests**: [GitHub Discussions](https://github.com/yourusername/tx-forge/discussions)
+- 🤝 **Contributing**: See [CONTRIBUTING.md](https://github.com/yourusername/tx-forge/blob/main/CONTRIBUTING.md)
+
+## ⚠️ **Important Safety Notice**
+
+**TxForge is a powerful tool that can interact with any smart contract.** While we've built in many safety features, blockchain transactions are **irreversible** and can result in **permanent loss of funds**.
+
+### Safety Features Included:
+- ✅ Contract existence validation
+- ✅ Comprehensive gas cost analysis
+- ✅ Balance verification before transactions
+- ✅ Clear warnings for high-risk operations
+- ✅ Educational documentation
+
+### Found a Bug or Issue?
+- **Report it**: [GitHub Issues](https://github.com/yourusername/tx-forge/issues/new)
+- **Include details**: Browser, network, steps to reproduce
+- **Security issues**: Email directly (check SECURITY.md)
+
+### Before Using:
+1. **Read the Terms of Service** (`/terms-of-service.html`)
+2. **Understand the Privacy Policy** (`/privacy-policy.html`)
+3. **Start with test networks** (Sepolia, etc.)
+4. **Only use funds you can afford to lose**
+5. **Always simulate transactions first**
+
+### For Public Hosting:
+If you're hosting TxForge publicly, consider:
+- Adding rate limiting to prevent abuse
+- Monitoring for suspicious activity
+- Educating users about blockchain risks
+- Having a clear disclaimer and terms of service
 
 ## 🤝 Contributing
 
