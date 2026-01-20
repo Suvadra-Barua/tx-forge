@@ -17,7 +17,11 @@ function TransactionSimulator() {
   const [simulationResult, setSimulationResult] = useState(null)
   const [isSimulating, setIsSimulating] = useState(false)
   const [isSending, setIsSending] = useState(false)
+  const [isReading, setIsReading] = useState(false)
   const [txHash, setTxHash] = useState('')
+
+  // Check if function is read-only (view or pure)
+  const isReadFunction = parsedFunction?.stateMutability === 'view' || parsedFunction?.stateMutability === 'pure'
 
   const parseABI = useCallback((input) => {
     setParseError('')
@@ -196,6 +200,59 @@ function TransactionSimulator() {
     }
   }
 
+  const readContract = async () => {
+    if (!publicClient || !parsedFunction || !contractAddress) return
+
+    setIsReading(true)
+    setSimulationResult(null)
+
+    try {
+      const args = getInputArgs()
+      const data = encodeFunctionData({
+        abi: [parsedFunction],
+        functionName: parsedFunction.name,
+        args,
+      })
+
+      const result = await publicClient.call({
+        to: contractAddress,
+        data,
+      })
+
+      let decodedResult = null
+      if (result.data) {
+        decodedResult = decodeFunctionResult({
+          abi: [parsedFunction],
+          functionName: parsedFunction.name,
+          data: result.data,
+        })
+      }
+
+      setSimulationResult({
+        success: true,
+        isRead: true,
+        returnData: decodedResult !== null ? JSON.stringify(decodedResult, (_, v) => 
+          typeof v === 'bigint' ? v.toString() : v, 2) : 'void',
+      })
+    } catch (error) {
+      let errorMessage = error.message
+      
+      if (error.cause?.reason) {
+        errorMessage = error.cause.reason
+      } else if (error.shortMessage) {
+        errorMessage = error.shortMessage
+      }
+
+      setSimulationResult({
+        success: false,
+        isRead: true,
+        error: errorMessage,
+      })
+    } finally {
+      setIsReading(false)
+    }
+  }
+
   const getInputPlaceholder = (type) => {
     if (type.includes('[]')) return 'e.g. ["value1", "value2"] or value1, value2'
     if (type.startsWith('address')) return '0x...'
@@ -358,10 +415,35 @@ function TransactionSimulator() {
                 </button>
               </div>
               
-              <div className="function-badge">
+              <div className={`function-badge ${isReadFunction ? 'read-only' : ''}`}>
                 <span className="function-name">{parsedFunction.name}</span>
-                <span className="function-mutability">{parsedFunction.stateMutability}</span>
+                <span className={`function-mutability ${isReadFunction ? 'read-only' : ''}`}>
+                  {parsedFunction.stateMutability}
+                </span>
+                {isReadFunction && (
+                  <span className="read-indicator">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2"/>
+                    </svg>
+                    READ ONLY
+                  </span>
+                )}
               </div>
+              
+              {isReadFunction && parsedFunction.outputs?.length > 0 && (
+                <div className="return-types">
+                  <span className="return-label">Returns</span>
+                  <div className="return-types-list">
+                    {parsedFunction.outputs.map((output, index) => (
+                      <span key={index} className="return-type-badge">
+                        {output.name && <span className="return-name">{output.name}:</span>}
+                        <span className="return-type">{output.type}</span>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div className="params-grid">
                 <div className="input-group">
@@ -409,80 +491,137 @@ function TransactionSimulator() {
               </div>
             </section>
 
-            <section className="actions-section">
+            <section className={`actions-section ${isReadFunction ? 'read-mode' : ''}`}>
               <div className="section-header">
-                <span className="section-number">03</span>
-                <h2>Execute</h2>
+                <span className={`section-number ${isReadFunction ? 'read-mode' : ''}`}>03</span>
+                <h2>{isReadFunction ? 'Read Contract' : 'Execute'}</h2>
               </div>
               
-              <div className="button-group">
-                <button
-                  onClick={simulateTransaction}
-                  disabled={!isConnected || !contractAddress || isSimulating || isSending}
-                  className="btn btn-simulate"
-                >
-                  {isSimulating ? (
-                    <>
-                      <span className="spinner"></span>
-                      Simulating...
-                    </>
-                  ) : (
-                    <>
-                      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 4.44-2.04" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                        <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-4.44-2.04" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                      Simulate
-                    </>
-                  )}
-                </button>
-                
-                <button
-                  onClick={sendTransaction}
-                  disabled={!isConnected || !contractAddress || isSimulating || isSending}
-                  className="btn btn-send"
-                >
-                  {isSending ? (
-                    <>
-                      <span className="spinner"></span>
-                      Sending...
-                    </>
-                  ) : (
-                    <>
-                      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M22 2L11 13M22 2L15 22L11 13M22 2L2 9L11 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                      Send
-                    </>
-                  )}
-                </button>
-              </div>
+              {isReadFunction ? (
+                <>
+                  <div className="read-info">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
+                      <path d="M12 16v-4M12 8h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                    </svg>
+                    <span>This is a read-only function. No transaction will be sent to the blockchain.</span>
+                  </div>
+                  
+                  <div className="button-group">
+                    <button
+                      onClick={readContract}
+                      disabled={!publicClient || !contractAddress || isReading}
+                      className="btn btn-read"
+                    >
+                      {isReading ? (
+                        <>
+                          <span className="spinner read"></span>
+                          Reading...
+                        </>
+                      ) : (
+                        <>
+                          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2"/>
+                          </svg>
+                          Read
+                        </>
+                      )}
+                    </button>
+                  </div>
+                  
+                  <div className="read-note">
+                    <span>No wallet required</span>
+                    <span className="dot">•</span>
+                    <span>Free to call</span>
+                    <span className="dot">•</span>
+                    <span>No gas fees</span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="button-group">
+                    <button
+                      onClick={simulateTransaction}
+                      disabled={!isConnected || !contractAddress || isSimulating || isSending}
+                      className="btn btn-simulate"
+                    >
+                      {isSimulating ? (
+                        <>
+                          <span className="spinner"></span>
+                          Simulating...
+                        </>
+                      ) : (
+                        <>
+                          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 4.44-2.04" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-4.44-2.04" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                          Simulate
+                        </>
+                      )}
+                    </button>
+                    
+                    <button
+                      onClick={sendTransaction}
+                      disabled={!isConnected || !contractAddress || isSimulating || isSending}
+                      className="btn btn-send"
+                    >
+                      {isSending ? (
+                        <>
+                          <span className="spinner"></span>
+                          Sending...
+                        </>
+                      ) : (
+                        <>
+                          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M22 2L11 13M22 2L15 22L11 13M22 2L2 9L11 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                          Send
+                        </>
+                      )}
+                    </button>
+                  </div>
 
-              {!isConnected && (
-                <div className="warning-message">
-                  Connect your wallet to simulate or send transactions
-                </div>
+                  {!isConnected && (
+                    <div className="warning-message">
+                      Connect your wallet to simulate or send transactions
+                    </div>
+                  )}
+                </>
               )}
             </section>
 
             {(simulationResult || txHash) && (
-              <section className="result-section">
+              <section className={`result-section ${simulationResult?.isRead ? 'read-mode' : ''}`}>
                 <div className="section-header">
-                  <span className="section-number">04</span>
-                  <h2>Result</h2>
+                  <span className={`section-number ${simulationResult?.isRead ? 'read-mode' : ''}`}>04</span>
+                  <h2>{simulationResult?.isRead ? 'Read Result' : 'Result'}</h2>
                 </div>
                 
-                <div className={`result-card ${simulationResult?.success ? 'success' : 'error'}`}>
+                <div className={`result-card ${simulationResult?.success ? (simulationResult?.isRead ? 'read' : 'success') : 'error'}`}>
                   {simulationResult?.success ? (
                     <>
-                      <div className="result-icon success">
-                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                          <path d="M22 4L12 14.01l-3-3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
+                      <div className={`result-icon ${simulationResult?.isRead ? 'read' : 'success'}`}>
+                        {simulationResult?.isRead ? (
+                          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2"/>
+                          </svg>
+                        ) : (
+                          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M22 4L12 14.01l-3-3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        )}
                       </div>
                       <div className="result-content">
-                        <h3>{txHash ? 'Transaction Sent!' : 'Simulation Successful'}</h3>
+                        <h3>
+                          {simulationResult?.isRead 
+                            ? 'Contract Read Successful' 
+                            : (txHash ? 'Transaction Sent!' : 'Simulation Successful')
+                          }
+                        </h3>
                         {simulationResult.gasEstimate && (
                           <div className="result-item">
                             <span className="label">Gas Estimate:</span>
@@ -491,8 +630,8 @@ function TransactionSimulator() {
                         )}
                         {simulationResult.returnData && (
                           <div className="result-item">
-                            <span className="label">Return Value:</span>
-                            <pre className="value code">{simulationResult.returnData}</pre>
+                            <span className="label">{simulationResult?.isRead ? 'Value:' : 'Return Value:'}</span>
+                            <pre className={`value code ${simulationResult?.isRead ? 'read-value' : ''}`}>{simulationResult.returnData}</pre>
                           </div>
                         )}
                         {txHash && (
@@ -519,7 +658,7 @@ function TransactionSimulator() {
                         </svg>
                       </div>
                       <div className="result-content">
-                        <h3>Transaction Failed</h3>
+                        <h3>{simulationResult?.isRead ? 'Read Failed' : 'Transaction Failed'}</h3>
                         <div className="error-details">
                           <pre>{simulationResult?.error}</pre>
                         </div>
