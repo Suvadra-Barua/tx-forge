@@ -255,6 +255,16 @@ function TransactionSimulator({ onNavigateToGuide }) {
     setTxHash('')
 
     try {
+      // Check if contract exists at the address
+      const contractCode = await publicClient.getCode({ address: contractAddress })
+      if (!contractCode || contractCode === '0x') {
+        setSimulationResult({
+          success: false,
+          error: `No contract found at address ${contractAddress}. Please verify the contract address and ensure it's deployed on ${chain?.name || 'this network'}.`,
+        })
+        return
+      }
+
       const args = getInputArgs()
       const data = encodeFunctionData({
         abi: [parsedFunction],
@@ -384,6 +394,17 @@ function TransactionSimulator({ onNavigateToGuide }) {
     setSimulationResult(null)
 
     try {
+      // Check if contract exists at the address
+      const contractCode = await publicClient.getCode({ address: contractAddress })
+      if (!contractCode || contractCode === '0x') {
+        setSimulationResult({
+          success: false,
+          isRead: true,
+          error: `No contract found at address ${contractAddress}. Please verify the contract address and ensure it's deployed on ${chain?.name || 'this network'}.`,
+        })
+        return
+      }
+
       const args = getInputArgs()
       const data = encodeFunctionData({
         abi: [parsedFunction],
